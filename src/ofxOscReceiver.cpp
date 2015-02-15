@@ -1,8 +1,8 @@
 /*
- 
+
  Copyright (c) 2007-2009, Damian Stewart
  All rights reserved.
- 
+
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions are met:
  * Redistributions of source code must retain the above copyright
@@ -13,7 +13,7 @@
  * Neither the name of the developer nor the
  names of its contributors may be used to endorse or promote products
  derived from this software without specific prior written permission.
- 
+
  THIS SOFTWARE IS PROVIDED BY DAMIAN STEWART ''AS IS'' AND ANY
  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -44,14 +44,14 @@ void ofxOscReceiver::setup( int listen_port )
 	// if we're already running, shutdown before running again
 	if ( listen_socket )
 		shutdown();
-	
+
 	// create the mutex
 	#ifdef TARGET_WIN32
 	mutex = CreateMutexA( NULL, FALSE, NULL );
 	#else
 	pthread_mutex_init( &mutex, NULL );
 	#endif
-	
+
 	// create socket
 	socketHasShutdown = false;
 	listen_socket = new UdpListeningReceiveSocket( IpEndpointName( IpEndpointName::ANY_ADDRESS, listen_port ), this );
@@ -87,16 +87,16 @@ void ofxOscReceiver::shutdown()
 			usleep(100);
 			#endif
 		}
-		
+
 		// thread will clean up itself
-		
+
 		// clean up the mutex
 		#ifdef TARGET_WIN32
 		ReleaseMutex( mutex );
 		#else
-		pthread_mutex_destroy( &mutex );	
+		pthread_mutex_destroy( &mutex );
 		#endif
-		
+
 		// delete the socket
 		delete listen_socket;
 		listen_socket = NULL;
@@ -138,7 +138,7 @@ void ofxOscReceiver::ProcessMessage( const osc::ReceivedMessage &m, const IpEndp
 
 	// set the address
 	ofMessage->setAddress( m.AddressPattern() );
-    
+
 	// set the sender ip/host
 	char endpoint_host[ IpEndpointName::ADDRESS_STRING_LENGTH ];
 	remoteEndpoint.AddressAsString( endpoint_host );
@@ -155,15 +155,32 @@ void ofxOscReceiver::ProcessMessage( const osc::ReceivedMessage &m, const IpEndp
 			ofMessage->addInt64Arg( arg->AsInt64Unchecked() );
 		else if ( arg->IsFloat() )
 			ofMessage->addFloatArg( arg->AsFloatUnchecked() );
+		else if ( arg->IsDouble() )
+			ofMessage->addDoubleArg( arg->AsDoubleUnchecked() );
 		else if ( arg->IsString() )
 			ofMessage->addStringArg( arg->AsStringUnchecked() );
+		else if ( arg->IsSymbol() )
+			ofMessage->addSymbolArg( arg->AsSymbolUnchecked() );
+		else if ( arg->IsChar() )
+			ofMessage->addCharArg( arg->AsCharUnchecked() );
+		else if ( arg->IsMidiMessage() )
+			ofMessage->addMidiMessageArg( arg->AsMidiMessageUnchecked() );
+		else if ( arg->IsBool())
+			ofMessage->addBoolArg( arg->AsBoolUnchecked() );
+		else if ( arg->IsInfinitum() )
+			ofMessage->addTriggerArg();
+		else if ( arg->IsTimeTag() )
+			ofMessage->addTimetagArg( arg->AsTimeTagUnchecked() );
+		else if ( arg->IsRgbaColor() )
+			ofMessage->addRgbaColorArg( arg->AsRgbaColorUnchecked() );
 		else if ( arg->IsBlob() ){
             const char * dataPtr;
             unsigned long len = 0;
             arg->AsBlobUnchecked((const void*&)dataPtr, len);
             ofBuffer buffer(dataPtr, len);
 			ofMessage->addBlobArg( buffer );
-		}else
+		}
+		else
 		{
 			ofLogError("ofxOscReceiver") << "ProcessMessage: argument in message " << m.AddressPattern() << " is not an int, float, or string";
 		}
@@ -237,12 +254,12 @@ bool ofxOscReceiver::getParameter(ofAbstractParameter & parameter){
 	if ( messages.size() == 0 ) return false;
 	while(hasWaitingMessages()){
 		ofAbstractParameter * p = &parameter;
-        
+
         getNextMessage(&msg);
         vector<string> address = ofSplitString(msg.getAddress(),"/",true);
-                
+
         for(int i=0;i<address.size();i++){
-            
+
             if(p) {
                 if(address[i]==p->getEscapedName()){
                     if(p->type()==typeid(ofParameterGroup).name()){
@@ -253,8 +270,17 @@ bool ofxOscReceiver::getParameter(ofAbstractParameter & parameter){
                         p->cast<int>() = msg.getArgAsInt32(0);
                     }else if(p->type()==typeid(ofParameter<float>).name() && msg.getArgType(0)==OFXOSC_TYPE_FLOAT){
                         p->cast<float>() = msg.getArgAsFloat(0);
-                    }else if(p->type()==typeid(ofParameter<bool>).name() && msg.getArgType(0)==OFXOSC_TYPE_INT32){
-                        p->cast<bool>() = msg.getArgAsInt32(0);
+                    }else if(p->type()==typeid(ofParameter<double>).name() && msg.getArgType(0)==OFXOSC_TYPE_DOUBLE){
+                        p->cast<double>() = msg.getArgAsDouble(0);
+                    }else if(p->type()==typeid(ofParameter<bool>).name() && (msg.getArgType(0)==OFXOSC_TYPE_TRUE
+																			|| msg.getArgType(0)==OFXOSC_TYPE_FALSE
+																			|| msg.getArgType(0)==OFXOSC_TYPE_INT32
+																			|| msg.getArgType(0)==OFXOSC_TYPE_INT64
+																			|| msg.getArgType(0)==OFXOSC_TYPE_FLOAT
+																			|| msg.getArgType(0)==OFXOSC_TYPE_DOUBLE
+																			|| msg.getArgType(0)==OFXOSC_TYPE_STRING
+																			|| msg.getArgType(0)==OFXOSC_TYPE_SYMBOL)){
+                        p->cast<bool>() = msg.getArgAsBool(0);
                     }else if(msg.getArgType(0)==OFXOSC_TYPE_STRING){
                         p->fromString(msg.getArgAsString(0));
                     }

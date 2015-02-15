@@ -1,8 +1,8 @@
 /*
- 
+
  Copyright (c) 2007-2009, Damian Stewart
  All rights reserved.
- 
+
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions are met:
  * Redistributions of source code must retain the above copyright
@@ -13,7 +13,7 @@
  * Neither the name of the developer nor the
  names of its contributors may be used to endorse or promote products
  derived from this software without specific prior written permission.
- 
+
  THIS SOFTWARE IS PROVIDED BY DAMIAN STEWART ''AS IS'' AND ANY
  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -67,21 +67,62 @@ public:
 	/// ensure that the type matches what you're requesting
 	/// (eg for an int argument, getArgType(index)==OF_TYPE_INT32
 	/// or getArgTypeName(index)=="int32")
+	/*
+	OSC 1.1 specifications types:
+			  i - 32bit integer
+			  h - 64bit integer
+			  f - 32bit floating point number
+			  d - 64bit (double) floating point number
+			  s - string
+			  S - symbol
+			  c - char
+			  m - 4 byte midi packet (8 digits hexadecimal)
+			  T - TRUE (no value required)
+			  F - FALSE (no value required)
+			  N - NIL (no value required)
+			  I - IMPULSE, act as a trigger (no value required), previously named INFINITUM
+			  t - TIMETAG, an OSC timetag in NTP format, encoded in the data section
+
+	See : http://cnmat.berkeley.edu/system/files/attachments/Nime09OSCfinal.pdf
+	*/
+	int32_t getArgAsInt( int index ) const;
 	int32_t getArgAsInt32( int index ) const;
-	uint64_t getArgAsInt64( int index ) const;
+	int64_t getArgAsInt64( int index ) const;
 	float getArgAsFloat( int index ) const;
-	string getArgAsString( int index ) const;
+	double getArgAsDouble( int index ) const;
+	std::string getArgAsString( int index ) const;
+	std::string getArgAsSymbol( int index ) const;
+	char getArgAsChar( int index ) const;
+	int32_t getArgAsMidiMessage( int index ) const;
+	bool getArgAsBool(int index) const;
+	bool getArgAsTrigger(int index) const;
+	bool getArgAsImpulse(int index) const;
+	bool getArgAsInfinitum(int index) const;
+	int64_t getArgAsTimetag( int index ) const;
 	ofBuffer getArgAsBlob( int index ) const;
+	int32_t getArgAsRgbaColor( int index ) const;
 
 	/// message construction
 	void setAddress( string _address ) { address = _address; };
 	/// host and port of the remote endpoint
 	void setRemoteEndpoint( string host, int port ) { remote_host = host; remote_port = port; }
+
 	void addIntArg( int32_t argument );
-	void addInt64Arg( uint64_t argument );
+	void addInt32Arg( int32_t argument );
+	void addInt64Arg( int64_t argument );
 	void addFloatArg( float argument );
+	void addDoubleArg( double argument );
 	void addStringArg( string argument );
+	void addSymbolArg( string argument );
+	void addCharArg( char argument );
+	void addMidiMessageArg( int32_t argument );
+	void addBoolArg( bool argument );
+	void addTriggerArg();
+	void addImpulseArg();
+	void addInfinitumArg();
+	void addTimetagArg( int64_t argument );
 	void addBlobArg( ofBuffer argument );
+	void addRgbaColorArg( int32_t argument );
 
 private:
 
